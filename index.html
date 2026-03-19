@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>focus · smart to‑do + AI sidekick</title>
+    <!-- Bootstrap 5 (light grid & utilities only) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1a2f3f 0%, #25475f 45%, #2c5775 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 1rem;
+        }
+
+        .todo-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 2.5rem;
+            box-shadow: 0 30px 50px rgba(0, 15, 30, 0.5), 0 0 0 1px rgba(255,255,255,0.4) inset;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+
+        .todo-header {
+            padding: 2rem 2rem 0.5rem 2rem;
+            border-bottom: 2px dashed rgba(70, 130, 180, 0.3);
+        }
+
+        .todo-header h1 {
+            font-weight: 700;
+            font-size: calc(2rem + 1.5vw);
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #0b2d44, #1f4e6f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.2rem;
+            text-shadow: 2px 4px 10px rgba(0,60,90,0.1);
+        }
+
+        /* input group */
+        .input-elegant {
+            background: white;
+            border-radius: 60px;
+            padding: 0.4rem;
+            box-shadow: 0 10px 25px rgba(0, 30, 50, 0.2), 0 0 0 1px rgba(255,255,255,0.7) inset;
+            transition: 0.2s;
+        }
+        .input-elegant:focus-within {
+            box-shadow: 0 10px 30px rgba(25, 100, 150, 0.4), 0 0 0 2px #a3cef1 inset;
+        }
+
+        .input-elegant input {
+            border: none;
+            background: transparent;
+            padding: 0.75rem 1.8rem;
+            font-size: 1.2rem;
+            border-radius: 60px !important;
+            color: #1d4663;
+            font-weight: 500;
+        }
+        .input-elegant input::placeholder {
+            color: #9bb7d4;
+            font-weight: 400;
+            opacity: 0.7;
+        }
+
+        .input-elegant button {
+            border-radius: 50px !important;
+            padding: 0.75rem 2.2rem;
+            font-weight: 600;
+            background: linear-gradient(125deg, #226688, #124c66);
+            border: none;
+            color: white;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 8px rgba(0,20,30,0.3);
+            transition: 0.15s;
+        }
+
+        .input-elegant button:hover {
+            background: linear-gradient(125deg, #1b5a7a, #0c4057);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 18px rgba(0, 60, 90, 0.4);
+        }
+
+        /* task list */
+        .task-list {
+            margin: 2rem 0 1.5rem 0;
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            padding: 1rem 1.8rem;
+            margin-bottom: 0.6rem;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 5px 12px rgba(0, 25, 45, 0.1);
+            transition: all 0.2s;
+        }
+
+        .task-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: #b5d8f0;
+            box-shadow: 0 8px 18px rgba(30, 100, 140, 0.2);
+        }
+
+        .task-text {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #113c55;
+            cursor: pointer;
+            word-break: break-word;
+            padding-right: 0.5rem;
+            transition: 0.15s;
+            flex: 1;
+            border-radius: 30px;
+            padding: 0.2rem 0.5rem;
+            margin-left: -0.5rem;
+        }
+
+        .task-text:hover {
+            background: rgba(170, 210, 240, 0.3);
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #7a9cba;
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        .btn-delete-minimal {
+            background: rgba(215, 90, 100, 0.1);
+            border: 1px solid rgba(200, 70, 80, 0.3);
+            color: #b13e55;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.4rem 1.3rem;
+            border-radius: 40px;
+            transition: 0.15s;
+            backdrop-filter: blur(4px);
+            margin-left: 0.5rem;
+        }
+
+        .btn-delete-minimal:hover {
+            background: #d65f6f;
+            border-color: #b13e55;
+            color: white;
+            transform: scale(1.04);
+            box-shadow: 0 6px 12px rgba(190, 70, 70, 0.3);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: rgba(255,255,240,0.3);
+            border-radius: 100px;
+            font-size: 1.2rem;
+            color: #3c627e;
+            font-weight: 400;
+            border: 2px dashed rgba(120,160,190,0.4);
+            backdrop-filter: blur(2px);
+        }
+
+        /* ----- AI TOOL SECTION (helping AI) ----- */
+        .ai-tool-section {
+            background: rgba(245, 250, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 3rem;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0 1rem;
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 15px 30px rgba(0, 45, 70, 0.15);
+        }
+
+        .ai-tool-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.2rem;
+        }
+        .ai-tool-header span {
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 5px rgba(0,80,120,0.3));
+        }
+        .ai-tool-header h3 {
+            font-weight: 650;
+            color: #0b3d5c;
+            margin: 0;
+            letter-spacing: -0.3px;
+        }
+
+        .ai-command-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .ai-command-row input {
+            flex: 1 1 250px;
+            border: none;
+            background: white;
+            padding: 1rem 1.8rem;
+            border-radius: 60px;
+            font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,30,40,0.1);
+            border: 1px solid rgba(150,190,220,0.4);
+        }
+        .ai-command-row input:focus {
+            outline: 2px solid #a0c8e8;
+        }
+        .ai-command-row button {
+            background: #226688;
+            border: none;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            box-shadow: 0 8px 15px rgba(0,50,70,0.2);
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+        .ai-command-row button:hover {
+            background: #1b5a7a;
+            transform: translateY(-2px);
+        }
+
+        .ai-output-area {
+            background: rgba(255,255,255,0.7);
+            border-radius: 40px;
+            padding: 1.5rem 2rem;
+            border: 1px solid white;
+            box-shadow: inset 0 1px 5px rgba(0,0,0,0.02);
+            font-size: 1.1rem;
+            color: #124d6e;
+            display: flex;
+            align-items: flex-start;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .ai-avatar {
+            background: #d4e7f5;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .ai-message {
+            flex: 1;
+            font-weight: 450;
+            line-height: 1.5;
+        }
+
+        .ai-message i {
+            color: #3085a5;
+            font-style: italic;
+            background: rgba(100,180,220,0.1);
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+        }
+
+        .ai-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .ai-mini-btn {
+            background: rgba(100, 150, 190, 0.2);
+            border: 1px solid rgba(255,255,255,0.7);
+            border-radius: 50px;
+            padding: 0.3rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #165d7c;
+            cursor: pointer;
+            transition: 0.1s;
+            backdrop-filter: blur(4px);
+        }
+        .ai-mini-btn:hover {
+            background: rgba(70, 140, 190, 0.3);
+        }
+
+        .signature-line {
+            margin-top: 2rem;
+            color: #ccdeec;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .signature-line span {
+            background: rgba(255,255,255,0.2);
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            color: #0a2f44;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        @media (max-width: 480px) {
+            .task-item {
+                flex-wrap: wrap;
+                padding: 0.9rem 1.2rem;
+            }
+            .btn-delete-minimal {
+                margin-left: 0;
+                width: 100%;
+                text-align: center;
+            }
+            .ai-command-row button {
+                width: 100%;
+            }
+            .ai-output-area {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+
+        .is-invalid {
+            border: 2px solid #e47283 !important;
+            background: rgba(255, 240, 240, 0.6);
+            animation: gentleShake 0.2s ease-in-out 2;
+        }
+        @keyframes gentleShake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(6px); }
+            50% { transform: translateX(-6px); }
+            100% { transform: translateX(0); }
+        }
+        .btn:focus, input:focus { outline: none; }
+    </style>
+</head>
+<body>
+    <div class="container px-3 px-md-4" style="max-width: 750px;">
+        <div class="card todo-card border-0">
+            <!-- header -->
+            <div class="todo-header d-flex align-items-center justify-content-between">
+                <h1>🧠 focus list</h1>
+                <!-- <span class="badge-soft">persist ✦ localStorage</span> -->
+            </div>
+
+            <div class="card-body p-4 pt-3">    
+                <!-- ADD TASK -->
+                <div class="input-elegant d-flex mt-3 mb-4">
+                    <input type="text" class="form-control" id="newTaskInput" placeholder="write a task …" aria-label="new task">
+                    <button class="btn" id="addTaskBtn" type="button">add</button>
+                </div>
+
+                <!-- TASK LIST -->
+                <ul class="task-list" id="taskListContainer"></ul>
+
+                <!-- 🆕 AI TOOL – helping AI (task assistant, breaker, ideas) -->
+                <div class="ai-tool-section">
+                    <div class="ai-tool-header">
+                        <span>🤖⚡</span>
+                        <h3>helping AI · your productivity sidekick</h3>
+                    </div>
+
+                    <!-- input area for AI requests -->
+                    <div class="ai-command-row">
+                        <input type="text" id="aiPromptInput" placeholder="e.g., 'break down buy groceries' or 'suggest 3 work tasks'" value="break down 'write report'">
+                        <button id="aiAskBtn">ask AI →</button>
+                    </div>
+
+                    <!-- dynamic AI output -->
+                    <div class="ai-output-area" id="aiOutputArea">
+                        <div class="ai-avatar">🧞</div>
+                        <div class="ai-message" id="aiMessageText">
+                            Hello! I can help you generate tasks or break down ideas. Try: <i>"suggest 5 creative tasks"</i> or <i>"break down plan party"</i>
+                        </div>
+                        <div class="ai-actions" id="aiActionButtons">
+                            <span class="ai-mini-btn" id="insertSuggestionsBtn">➕ insert suggestions</span>
+                            <span class="ai-mini-btn" id="clearAIBtn">🗑️ clear</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- footer -->
+                <div class="signature-line">
+                    <span>📌 localStorage</span>
+                    <span>⚡ responsive</span>
+                    <span>🗑️ delete · ✓ toggle</span>
+                </div>
+                <p class="text-end small mt-2 mb-0" style="color:#bcd3e6; opacity:0.9;">🤖 AI tool · helps you add tasks</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- bootstrap + script -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function() {
+            // ----- core task logic (localStorage) -----
+            const taskInput = document.getElementById('newTaskInput');
+            const addBtn = document.getElementById('addTaskBtn');
+            const taskListEl = document.getElementById('taskListContainer');
+
+            // AI elements
+            const aiPrompt = document.getElementById('aiPromptInput');
+            const aiAskBtn = document.getElementById('aiAskBtn');
+            const aiMessageText = document.getElementById('aiMessageText');
+            const insertBtn = document.getElementById('insertSuggestionsBtn');
+            const clearBtn = document.getElementById('clearAIBtn');
+
+            const STORAGE_KEY = 'smartTodoClean';
+            let tasks = [];
+
+            // Load or init
+            function loadTasks() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try {
+                        tasks = JSON.parse(stored);
+                        if (!Array.isArray(tasks)) tasks = [];
+                    } catch {
+                        tasks = [];
+                    }
+                }
+                if (!tasks.length) {
+                    tasks = [
+                        { text: 'improve CSS design', completed: false },
+                        { text: 'remove feature badges', completed: false },
+                        { text: 'enjoy minimal UI', completed: false }
+                    ];
+                }
+            }
+
+            function saveTasks() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+            }
+
+            function render() {
+                taskListEl.innerHTML = '';
+
+                if (tasks.length === 0) {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'empty-message';
+                    emptyDiv.textContent = '✧ your list is empty — add something ✧';
+                    taskListEl.appendChild(emptyDiv);
+                } else {
+                    tasks.forEach((task, idx) => {
+                        const li = document.createElement('li');
+                        li.className = 'task-item';
+
+                        const textSpan = document.createElement('span');
+                        textSpan.className = `task-text ${task.completed ? 'completed' : ''}`;
+                        textSpan.textContent = task.text;
+                        textSpan.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            tasks[idx].completed = !tasks[idx].completed;
+                            saveTasks();
+                            render();
+                        });
+
+                        const delBtn = document.createElement('button');
+                        delBtn.className = 'btn-delete-minimal';
+                        delBtn.textContent = 'Delete';
+                        delBtn.setAttribute('aria-label', 'remove task');
+                        delBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            tasks.splice(idx, 1);
+                            saveTasks();
+                            render();
+                        });
+
+                        li.appendChild(textSpan);
+                        li.appendChild(delBtn);
+                        taskListEl.appendChild(li);
+                    });
+                }
+            }
+
+            // ----- 🤖 AI helper engine (rule‑based, helpful, no API key) -----
+            function generateAITasks(promptText) {
+                if (!promptText) return ["write a task", "meditate 5min", "drink water"]; // fallback
+
+                const lower = promptText.toLowerCase();
+
+                // break down request
+                if (lower.includes('break down') || lower.includes('breakdown')) {
+                    const match = lower.match(/['"](.*?)['"]|break down (.*)/i);
+                    let goal = match?.[1] || match?.[2] || promptText.replace(/break down/i,'').trim() || 'project';
+                    goal = goal.replace(/['"]/g,'').trim();
+                    // return subtasks
+                    return [
+                        `📌 research: ${goal}`,
+                        `📌 outline steps for ${goal}`,
+                        `📌 gather materials for ${goal}`,
+                        `📌 execute first part of ${goal}`,
+                        `📌 review/revise ${goal}`
+                    ];
+                }
+                // suggest X tasks
+                else if (lower.includes('suggest') || lower.includes('ideas') || lower.includes('generate')) {
+                    let count = 3;
+                    const countMatch = lower.match(/(\d+)/);
+                    if (countMatch) count = parseInt(countMatch[0]) || 3;
+                    count = Math.min(7, Math.max(1, count)); // between 1-7
+
+                    const baseIdeas = [
+                        "write a thank you note", "organize desk", "plan weekend trip",
+                        "read 10 pages", "learn a new word", "stretch 5 min",
+                        "call a friend", "backup phone", "review budget",
+                        "water plants", "declutter one shelf", "write journal",
+                        "brainstorm project", "listen to podcast", "try new recipe"
+                    ];
+                    // shuffle and pick count
+                    const shuffled = [...baseIdeas].sort(() => 0.5 - Math.random());
+                    return shuffled.slice(0, count).map(idea => `✨ ${idea}`);
+                }
+                // plan / schedule
+                else if (lower.includes('plan') || lower.includes('schedule')) {
+                    return [
+                        "🗓️ set priority for today",
+                        "🗓️ block time for deep work",
+                        "🗓️ prepare tomorrow's to-do",
+                        "🗓️ review calendar"
+                    ];
+                }
+                // default: smart interpretation
+                else {
+                    return [
+                        `💡 create task: "${promptText.substring(0,20)}"`,
+                        `💡 review related to ${promptText}`,
+                        `💡 set deadline for ${promptText}`,
+                        `💡 ask someone about ${promptText}`
+                    ];
+                }
+            }
+
+            // display AI response in output
+            function handleAIRequest() {
+                const userRequest = aiPrompt.value.trim();
+                if (userRequest === '') {
+                    aiMessageText.innerHTML = '⚠️ please type something — i can break down tasks or suggest ideas.';
+                    return;
+                }
+
+                const suggestions = generateAITasks(userRequest);
+                // format nicely
+                let html = `🧠 <strong>for "${userRequest}"</strong><br>`;
+                suggestions.forEach((s, idx) => {
+                    html += `• ${s}<br>`;
+                });
+                aiMessageText.innerHTML = html;
+
+                // store suggestions in data attribute for insertion
+                insertBtn.dataset.suggestions = JSON.stringify(suggestions);
+            }
+
+            // insert suggestions as new tasks (skip duplicates)
+            function insertSuggestions() {
+                const raw = insertBtn.dataset.suggestions;
+                if (!raw) {
+                    // if nothing stored, use current message text as fallback? 
+                    // better gentle reminder
+                    alert('Ask AI first to generate suggestions.');
+                    return;
+                }
+                let suggestionList;
+                try {
+                    suggestionList = JSON.parse(raw);
+                } catch {
+                    suggestionList = [];
+                }
+                if (!suggestionList.length) return;
+
+                let addedCount = 0;
+                suggestionList.forEach(text => {
+                    // clean (remove bullet icons if present)
+                    let cleanText = text.replace(/^[•✨📌🗓️💡]\s*/, '').trim();
+                    if (cleanText === '') return;
+                    // avoid duplicate identical (simple check)
+                    const exists = tasks.some(t => t.text.toLowerCase() === cleanText.toLowerCase());
+                    if (!exists) {
+                        tasks.push({ text: cleanText, completed: false });
+                        addedCount++;
+                    }
+                });
+
+                if (addedCount > 0) {
+                    saveTasks();
+                    render();
+                    aiMessageText.innerHTML = `✅ added ${addedCount} new task${addedCount > 1 ? 's' : ''} from AI.`;
+                    insertBtn.dataset.suggestions = ''; // clear
+                } else {
+                    aiMessageText.innerHTML = `👀 all suggestions already exist (or empty). Try a different prompt.`;
+                }
+            }
+
+            // clear AI output and stored suggestions
+            function clearAIOutput() {
+                aiMessageText.innerHTML = `Hello! I can help you generate tasks or break down ideas. Try: <i>"suggest 5 creative tasks"</i> or <i>"break down plan party"</i>`;
+                insertBtn.dataset.suggestions = '';
+                aiPrompt.value = '';
+            }
+
+            // ----- event binding -----
+            addBtn.addEventListener('click', () => {
+                const raw = taskInput.value.trim();
+                if (raw === '') {
+                    taskInput.classList.add('is-invalid');
+                    setTimeout(() => taskInput.classList.remove('is-invalid'), 300);
+                    return;
+                }
+                tasks.push({ text: raw, completed: false });
+                saveTasks();
+                render();
+                taskInput.value = '';
+                taskInput.focus();
+            });
+
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addBtn.click();
+                }
+            });
+
+            // AI ask
+            aiAskBtn.addEventListener('click', handleAIRequest);
+            aiPrompt.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAIRequest();
+                }
+            });
+
+            // insert suggestions button
+            insertBtn.addEventListener('click', insertSuggestions);
+            // clear button
+            clearBtn.addEventListener('click', clearAIOutput);
+
+            // init
+            loadTasks();
+            render();
+
+            // example default suggestion for demo (prefill breakdown)
+            // already set in input value "break down 'write report'"
+            window.addEventListener('load', () => {
+                // optional: auto‑trigger a demo after 500ms so user sees AI working
+                setTimeout(() => {
+                    if (aiPrompt.value.trim() !== '') {
+                        handleAIRequest();
+                    }
+                }, 300);
+            });
+
+            window.addEventListener('beforeunload', () => saveTasks());
+        })();
+    </script>
+
+    <!-- tiny extra style -->
+    <style>
+        .ai-mini-btn { cursor: pointer; }
+        [data-suggestions] { transition: 0.1s; }
+    </style>
+</body>
+</html>
